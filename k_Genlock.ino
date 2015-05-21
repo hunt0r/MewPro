@@ -19,9 +19,11 @@ void startGenlock()
   }
 }
 
+const char ackString[] PROGMEM = "\203FN\013";
+
 void stopGenlock()
 {
-  memcpy((char *)buf, "\203FN\013", 4);
+  memcpy_P((char *)buf, ackString, sizeof ackString);
   SendBufToCamera();
 }
 
@@ -77,13 +79,13 @@ void setupGenlock()
 
 void checkGenlock()
 {
-  cli();
+  noInterrupts();
   unsigned long currentmillis = millis();
   if (timelapse > 0 && !waiting && currentmillis - previous_sync >= timelapse) {
     timelapse = 0;
-    queueIn("SY2");
+    queueIn(F("SY2"));
   }
-  sei();
+  interrupts();
 }
 
 #endif
