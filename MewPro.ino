@@ -59,7 +59,7 @@ END copy */
 
 // enable console output
 // set false if this is MewPro #0 of dual dongle configuration
-boolean debug = true;
+boolean debug = false;
 
 //////////////////////////////////////////////////////////
 // Options:
@@ -165,7 +165,7 @@ void userSettings()
   // you can set put any camera commands here. For example:
   // queueIn("AI1");
   // queueIn("TI5");
-  showMasterStatus(); // show whether master or slave mode via LED
+  // showMasterStatus(); // show whether master or slave mode via LED
 }
 
 void setup()
@@ -182,7 +182,8 @@ void setup()
   setupPIRSensor();
   setupGenlock();
 
-  setupLED(); // onboard LED setup 
+  setupLED(); // onboard LED setup
+  showMasterStatus();
   pinMode(BPRDY, OUTPUT); digitalWrite(BPRDY, LOW);    // Show camera MewPro attach. 
 
   // don't forget to switch pin configurations to INPUT.
