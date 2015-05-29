@@ -146,7 +146,7 @@ boolean debug = true;
 //********************************************************
 // k_Genlock: Generator Lock
 //   Note: MewPro #0 in dual dongle configuration should always boolean debug = false;
-#undef  USE_GENLOCK
+#define  USE_GENLOCK
 
 // end of Options
 //////////////////////////////////////////////////////////
@@ -165,6 +165,7 @@ void userSettings()
   // you can set put any camera commands here. For example:
   // queueIn("AI1");
   // queueIn("TI5");
+  showMasterStatus(); // show whether master or slave mode via LED
 }
 
 void setup()
@@ -194,7 +195,7 @@ void loop()
 {
   // Attach or detach bacpac
   if (digitalRead(HBUSRDY) == HIGH) {
-    if (lastHerobusState != HIGH) {
+    if (lastHerobusState != HIGH) { // Bacpac just attached
 #if !defined(USE_I2C_PROXY)
       pinMode(I2CINT, OUTPUT); digitalWrite(I2CINT, HIGH);
 #endif
@@ -206,7 +207,7 @@ void loop()
       }
     }
   } else {
-    if (lastHerobusState != LOW) {
+    if (lastHerobusState != LOW) { // Bacpac just detatched
       pinMode(I2CINT, INPUT);
       lastHerobusState = LOW;
     }

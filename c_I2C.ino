@@ -146,6 +146,37 @@ boolean isMaster()
   return (eepromId == ID_MASTER);
 }
 
+// Show Master/Slave via LED: 1 blink for Slave, 2 for Master
+void showMasterStatus()
+{
+  boolean orig_led_state = ledState;
+  isMaster() ? signalMaster() : signalSlave();
+  if (orig_led_state == 1) ledOn();
+  else ledOff();
+}
+
+void signalMaster() // 2 blinks for Master
+{
+  ledOff(); // ready
+  delay(100);
+  ledOn(); // blink 1
+  delay(250);
+  ledOff();
+  delay(250);
+  ledOn(); // blink 2
+  delay(250);
+}
+
+void signalSlave() // 1 blink for Slave
+{
+  ledOff(); // ready
+  delay(100);
+  ledOn(); // blink 1
+  delay(500);
+  ledOff();
+  delay(250);
+}
+
 // Write I2C EEPROM
 void roleChange()
 {
@@ -174,6 +205,8 @@ void roleChange()
   }
   pinMode(BPRDY, OUTPUT);
   eepromId = id;
+  isMaster() ? __debug(F(" to master")) : __debug(F(" to slave"));
+  showMasterStatus(); // show master/slave status via LED
   digitalWrite(BPRDY, LOW);
   resetI2C();
 }
@@ -299,6 +332,8 @@ void roleChange()
   __romWrite(id);
   pinMode(BPRDY, OUTPUT);
   eepromId = id;
+  isMaster() ? __debug(F(" to master")) : __debug(F(" to slave"));
+  showMasterStatus(); // show master/slave status via LED
   digitalWrite(BPRDY, LOW);
 }
 // --------------------------------------------------------------------------------
