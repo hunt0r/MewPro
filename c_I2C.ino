@@ -469,6 +469,7 @@ void powerOff()
 
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
+      Serial.println("");
       Serial.println(F("PW00"));
       Serial.flush();
     }
@@ -483,6 +484,7 @@ void My_startRecording()
 
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
+      Serial.println("");
       Serial.println(F("SH01"));
       Serial.flush();
     }
@@ -497,12 +499,47 @@ void My_stopRecording()
 
 #ifdef USE_GENLOCK
     if (1) { // send to Dongle
+      Serial.println("");
       Serial.println(F("SH00"));
       Serial.flush();
     }
 #endif
 
 }
+
+void My_USBMode()
+{
+    //power off camera
+    buf[0] = 3; buf[1] = 'P'; buf[2] = 'W'; buf[3] = 0x00;
+    SendBufToCamera();
+
+    //detach Mewpro
+    pinMode(BPRDY, INPUT);
+    delay(500);
+
+    //power on camera
+    pinMode(PWRBTN, OUTPUT);
+    digitalWrite(PWRBTN, LOW);
+    delay(1000);
+    tdDone = false;     //maybe comment this later
+    pinMode(PWRBTN, INPUT);
+
+//DO NOT UNCOMMENT codes below (not tested yet)
+/*
+#ifdef USE_GENLOCK
+    if (1) { // send to Dongle
+      Serial.println("");
+      Serial.println("^"));
+      Serial.flush();
+    }
+#endif
+*/
+
+    noInterrupts(); //mask all interrupts so that no more SMARTY commands will be sent
+    while(1);       //dead loop to make sure Mewpro won't interfere USB transmission
+
+}
+
 
 void checkCameraCommands()
 {
