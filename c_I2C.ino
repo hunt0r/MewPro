@@ -512,10 +512,10 @@ void My_USBMode()
     //power off camera
     buf[0] = 3; buf[1] = 'P'; buf[2] = 'W'; buf[3] = 0x00;
     SendBufToCamera();
+    tdDone = false;
 
-    //detach Mewpro
-    pinMode(BPRDY, INPUT);
-    delay(500);
+    //wait for some time
+    delay(5000);
 
     //power on camera
     pinMode(PWRBTN, OUTPUT);
@@ -523,6 +523,10 @@ void My_USBMode()
     delay(1000);
     tdDone = false;     //maybe comment this later
     pinMode(PWRBTN, INPUT);
+    
+    //detach Mewpro
+    pinMode(BPRDY, INPUT);
+    delay(1000);
 
 //DO NOT UNCOMMENT codes below (not tested yet)
 /*
@@ -536,6 +540,8 @@ void My_USBMode()
 */
 
     noInterrupts(); //mask all interrupts so that no more SMARTY commands will be sent
+    __debug(F("Plug in USB cable now"));
+    Serial.flush();
     while(1);       //dead loop to make sure Mewpro won't interfere USB transmission
 
 }
@@ -585,6 +591,17 @@ void checkCameraCommands()
         bufp = 1;
         __debug(F("Stop Recording!"));
         My_stopRecording();
+        while (inputAvailable()) {
+          if (myRead() == '\n') {
+            return;
+          }
+        }
+        return;
+        
+        case '^':
+        bufp = 1;
+        __debug(F("Getting into USB Mode"));
+        My_USBMode();
         while (inputAvailable()) {
           if (myRead() == '\n') {
             return;
