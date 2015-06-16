@@ -344,6 +344,14 @@ void __debug(const __FlashStringHelper *p)
 {
   if (debug) {
     Serial.println(p);
+
+    //it doesn't matter whether wait for flush or not when you are debugging
+    //because with debug msg on, the whole system cannot work normally
+    //if not in a Genlock sync system (single use), I think it's better to wait for flush
+    //may cause delay for a long debug msg
+#ifndef USE_GENLOCK
+    Serial.flush();
+#endif
   }
 }
 
@@ -523,7 +531,7 @@ void My_USBMode()
     delay(1000);
     tdDone = false;     //maybe comment this later
     pinMode(PWRBTN, INPUT);
-    
+
     //detach Mewpro
     pinMode(BPRDY, INPUT);
     delay(1000);
@@ -597,7 +605,7 @@ void checkCameraCommands()
           }
         }
         return;
-        
+
         case '^':
         bufp = 1;
         __debug(F("Getting into USB Mode"));
