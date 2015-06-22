@@ -4,14 +4,14 @@
 #endif
 
 #if defined (__SAM3X8E__) // Arduino Due only
-// GoPro camera already has pull-up resistors on the I2C bus inside. 
-// Due's Wire lib, however, uses D20 and D21 as SDA and SCL respectively, which have pull-up resistors of 1k ohm, too. 
+// GoPro camera already has pull-up resistors on the I2C bus inside.
+// Due's Wire lib, however, uses D20 and D21 as SDA and SCL respectively, which have pull-up resistors of 1k ohm, too.
 // Thus in order to avoid the conflict of resistors we must use non pull-up'ed D70 and D71 as SDA and SCL respectively,
 // and these correspond to Wire1 lib here.
 #define WIRE              Wire1
 #else
 // standard Wire library enables ATmega internal pull-ups by default. usually the resistors are 20k ohm or greater thus
-// these should cause no harm. 
+// these should cause no harm.
 #define WIRE              Wire
 #endif
 
@@ -185,7 +185,7 @@ void roleChange()
   delay(1000);
 
   id = isMaster() ? ID_SLAVE : ID_MASTER;
-  
+
   WIRE.begin();
   for (unsigned int a = 0; a < 16; a += PAGESIZE) {
     WIRE.beginTransmission(I2CEEPROM);
@@ -239,12 +239,12 @@ boolean addressHandler(uint16_t slave, uint8_t count)
 }
 
 void receiveHandler(size_t numBytes)
-{ 
+{
   if (emulateRom) {
     // EEPROM access (byte write: ignored)
     return;
   }
-  
+
   // SMARTY
   int i = 0;
   while (WIRE.available()) {
@@ -254,10 +254,10 @@ void receiveHandler(size_t numBytes)
   if ((recv[1] << 8) + recv[2] == SET_BACPAC_3D_SYNC_READY) {
     switch (recv[3]) {
     case 1:
-      ledOn();
+      ledOn();      //If Mewpro gets synced with the system, On-board LED turns on (on receiving "SR1")
       break;
     case 0:
-      ledOff();
+      ledOff();    //Turn off LED on receiving "SR0"
       break;
     default:
       break;
@@ -273,9 +273,9 @@ void requestHandler()
       // GoPro requests random read only
       WIRE.write(EEPROM.read(wordAddr % ROMSIZE + EEPROMOFFSET));
     }
-    return; 
+    return;
   }
-  
+
   // SMARTY
   digitalWrite(I2CINT, HIGH);
   WIRE.write(buf, (int) buf[0] + 1);
@@ -343,6 +343,14 @@ void __debug(const __FlashStringHelper *p)
 {
   if (debug) {
     Serial.println(p);
+
+    //it doesn't matter whether wait for flush or not when you are debugging
+    //because with debug msg on, the whole system cannot work normally
+    //if not in a Genlock sync system (single use), I think it's better to wait for flush
+    //may cause delay for a long debug msg
+#ifndef USE_GENLOCK
+    Serial.flush();
+#endif
   }
 }
 
@@ -424,6 +432,13 @@ void SendBufToCamera() {
   }
 #if !defined(USE_I2C_PROXY)
   digitalWrite(I2CINT, LOW);
+
+  /*
+  by pulling low the I2CINT (making a request),
+  Go Pro will handle the request and receiving buf[]
+  then Go Pro executes the command in buf[] immediately
+  */
+
 #else
   WIRE.beginTransmission(I2CPROXY);
   WIRE.write(buf, (int) buf[0] + 1);
@@ -453,6 +468,91 @@ void powerOn()
   pinMode(PWRBTN, INPUT);
 }
 
+void powerOff()
+{
+    //power off master first
+    buf[0] = 3; buf[1] = 'P'; buf[2] = 'W'; buf[3] = 0x00;
+    SendBufToCamera();
+
+#ifdef USE_GENLOCK
+    if (1) { // send to Dongle
+      Serial.println("");
+      Serial.println(F("PW00"));
+      Serial.flush();
+    }
+#endif
+
+}
+
+void My_startRecording()
+{
+    buf[0] = 3; buf[1] = 'S'; buf[2] = 'Y'; buf[3] = 0x01;
+    SendBufToCamera();
+
+#ifdef USE_GENLOCK
+    if (1) { // send to Dongle
+      Serial.println("");
+      Serial.println(F("SH01"));
+      Serial.flush();
+    }
+#endif
+
+}
+
+void My_stopRecording()
+{
+    buf[0] = 3; buf[1] = 'S'; buf[2] = 'Y'; buf[3] = 0x00;
+    SendBufToCamera();
+
+#ifdef USE_GENLOCK
+    if (1) { // send to Dongle
+      Serial.println("");
+      Serial.println(F("SH00"));
+      Serial.flush();
+    }
+#endif
+
+}
+
+void My_USBMode()
+{
+    //power off camera
+    buf[0] = 3; buf[1] = 'P'; buf[2] = 'W'; buf[3] = 0x00;
+    SendBufToCamera();
+    tdDone = false;
+
+    //wait for some time
+    delay(5000);
+
+    //power on camera
+    pinMode(PWRBTN, OUTPUT);
+    digitalWrite(PWRBTN, LOW);
+    delay(1000);
+    tdDone = false;     //maybe comment this later
+    pinMode(PWRBTN, INPUT);
+
+    //detach Mewpro
+    pinMode(BPRDY, INPUT);
+    delay(1000);
+
+//DO NOT UNCOMMENT codes below (not tested yet)
+/*
+#ifdef USE_GENLOCK
+    if (1) { // send to Dongle
+      Serial.println("");
+      Serial.println("^"));
+      Serial.flush();
+    }
+#endif
+*/
+
+    noInterrupts(); //mask all interrupts so that no more SMARTY commands will be sent
+    __debug(F("Plug in USB cable now"));
+    Serial.flush();
+    while(1);       //dead loop to make sure Mewpro won't interfere USB transmission
+
+}
+
 
 void checkCameraCommands()
 {
@@ -470,6 +570,54 @@ void checkCameraCommands()
           SendBufToCamera();
         }
         return;
+
+//***********************Adding our unique commands********************
+      case '#':
+        bufp = 1;
+        __debug(F("camera power off"));
+        powerOff();
+        while (inputAvailable()) {
+          if (myRead() == '\n') {
+            return;
+          }
+        }
+        return;
+
+      case '$':
+        bufp = 1;
+        __debug(F("Start Recording!"));
+        My_startRecording();
+        while (inputAvailable()) {
+          if (myRead() == '\n') {
+            return;
+          }
+        }
+        return;
+
+      case '%':
+        bufp = 1;
+        __debug(F("Stop Recording!"));
+        My_stopRecording();
+        while (inputAvailable()) {
+          if (myRead() == '\n') {
+            return;
+          }
+        }
+        return;
+
+        case '^':
+        bufp = 1;
+        __debug(F("Getting into USB Mode"));
+        My_USBMode();
+        while (inputAvailable()) {
+          if (myRead() == '\n') {
+            return;
+          }
+        }
+        return;
+
+//*************************End of custom commands***********************************
+
       case '&':
         bufp = 1;
         debug = !debug;
@@ -479,7 +627,7 @@ void checkCameraCommands()
             return;
           }
         }
-        return;  
+        return;
       case '@':
         bufp = 1;
         __debug(F("camera power on"));
@@ -509,7 +657,7 @@ void checkCameraCommands()
           c -= '0';
           if (c >= 10) {
             c = (c & 0x0f) + 9;
-          }    
+          }
         }
         if (bufp < 4) {
           shiftable = true;
@@ -520,7 +668,7 @@ void checkCameraCommands()
           } else {
             buf[bufp++] = c;
           }
-          shiftable = !shiftable;      
+          shiftable = !shiftable;
         }
         break;
     }
