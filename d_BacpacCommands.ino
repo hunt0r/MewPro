@@ -52,7 +52,7 @@ void bacpacCommand()
 //         baterry:remaining:photos:seconds:videos:media:
 //         03      FFFF      0000   FFFF    0000   00    FFFFFF
 //      queueIn(F("XS0303FFFF0000FFFF000000FFFFFF")); // dummy
-      return;   
+      return;
     }
 #endif
     if (!tdDone) {
@@ -165,7 +165,7 @@ void bacpacCommand()
 const char tmptd[TD_BUFFER_SIZE] PROGMEM = {
   0x28, 'T', 'D', 0x0f, 0x01, 0x12, 0x04, 0x0d, 0x33, MODE_PHOTO,
   0x05, 0xff, 0x03, 0x07, 0x00, 0x00, 0x02, 0x00, 0x02, 0x00,
-  0x01, 0x02, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00, 
+  0x01, 0x02, 0x00, 0x00, 0x00, 0x04, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x0a, };
 
 void checkBacpacCommands()
@@ -206,7 +206,7 @@ void checkBacpacCommands()
             __debug(F("master bacpac and not use genlock"));
             resetVMD();
             queueIn(F("VO1")); // SET_CAMERA_VIDEO_OUTPUT to herobus
-            userSettings(); 
+            userSettings();
           } else {
 #ifdef USE_GENLOCK
             __debug(F("slave bacpac and use genlock (not supported yet)"));
@@ -243,7 +243,7 @@ void checkBacpacCommands()
       } else {
         ; // do nothing
       }
-    } else { 
+    } else {
         bacpacCommand();
     }
     recvq = false;

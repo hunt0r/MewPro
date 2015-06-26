@@ -284,7 +284,7 @@ void requestHandler()
 void resetI2C()
 {
   emptyQueue();
-  
+
   WIRE.begin(I2CEEPROM, ((SMARTY << 1) | 1));
   WIRE.onAddrReceive(addressHandler);
   WIRE.onReceive(receiveHandler);
@@ -682,5 +682,3 @@ void checkCameraCommands()
     }
   }
 }
-
-

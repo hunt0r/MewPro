@@ -32,7 +32,7 @@ void setupLightSensor()
 
 void checkLightSensor()
 {
-//  const int threshold = 360; // 15000lux = SRC current 150μA (reached the saturation at load resistor R2 = 4k7) 
+//  const int threshold = 360; // 15000lux = SRC current 150μA (reached the saturation at load resistor R2 = 4k7)
   const int threshold = 228; // 2500lux = SRC current 40μA
 
 

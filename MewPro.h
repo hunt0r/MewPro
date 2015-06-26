@@ -13,7 +13,7 @@ const int SWITCH1_PIN      = 6;  // Software debounced; ON-start OFF-stop
 //                           7;  // (Arduino: Not in use; GR-KURUMI: Used by I2C SCL)
 //                           8;  // (Arduino: Not in use; GR-KURUMI: Used by I2C SDA)
 const int PIR_PIN          = 9;  // Passive InfraRed motion sensor
-// BEGIN Don't change the following pin allocations. These are used to control Herobus. 
+// BEGIN Don't change the following pin allocations. These are used to control Herobus.
 const int I2CINT           = 10; // (SS)
 const int TRIG             = 11; // (MOSI)
 const int BPRDY            = 12; // (MISO) Pulled up by camera
@@ -24,7 +24,7 @@ const int PWRBTN           = A1; // (15) Pulled up by camera
 //                           A2; // (16) (Not in use)
 //                           A3; // (17) (Not in use)
 //                           A4; // (18) (Arduino: Used by I2C SDA; GR-KURUMI: Not in use)
-//                           A5; // (19) (Arduino: Used by I2C SCL; GR-KURUMI: Not in use) 
+//                           A5; // (19) (Arduino: Used by I2C SCL; GR-KURUMI: Not in use)
 //                           A6; // (20) Analog only (Not in use)
 const int LIGHT_SENSOR_PIN = A7; // (21) Analog only
 //
@@ -40,7 +40,7 @@ const int SWITCH1_PIN      = 6;    // (25 | A7) Software debounced; ON-start OFF
 const int SHUTTER_PIN      = 7;    // Interrupt pin w/o software debounce
 const int LIGHT_SENSOR_PIN = 8;    // (26 | A8)
 const int PIR_PIN          = 9;    // (27 | A9) Passive InfraRed motion sensor
-// BEGIN Don't change the following pin allocations. These are used to control Herobus. 
+// BEGIN Don't change the following pin allocations. These are used to control Herobus.
 const int I2CINT           = 10;   // (28 | A10)
 //                           11;   //              (Arduino Pro Micro: No pin)
 //                           12;   // (29 | A11)   (Arduino Pro Micro: No pin)
@@ -120,7 +120,7 @@ boolean tdDone = false;
 //
 // td[] meanings and associated bacpac command
 const short int SET_BACPAC_DATE_TIME              = ('T' << 8) + 'M';
-const int TD_DATE_TIME_year                 = 0x03; // year (0-99)    
+const int TD_DATE_TIME_year                 = 0x03; // year (0-99)
 const int TD_DATE_TIME_month                = 0x04; // month (1-12)
 const int TD_DATE_TIME_day                  = 0x05; // day (1-31)
 const int TD_DATE_TIME_hour                 = 0x06; // hour (0-23)

@@ -4,7 +4,7 @@
 //
 #ifdef USE_VIDEOMOTION
 
-// This part of the sketch exclusively uses the following pins. 
+// This part of the sketch exclusively uses the following pins.
 // (If an other part uses one of these pins please #undef that part.)
 //
 // if Teensy 3.1 or Teensy 3.0
@@ -58,7 +58,7 @@ volatile boolean nosignal = true;
 
 //****************************************************************
 //  Teensy 3.1             || Teensy 3.0             || Teensy LC
-#if defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__) 
+#if defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__)
 const int SCANLINE_OFFSET = 94;
 const int MAX_SCANLINES = 100;
 typedef uint32_t image_t; // 1 word = 32 bits
@@ -160,9 +160,9 @@ void VSyncHandler()
 {
   uint16_t i;
   image_t d;
-	
+
   currentLine = 3; // VSync always occurs in line 4 (or 267) (base 1).
-  
+
   // For detailed info on HSync and VSync timing, this is very good document:
   //   "MAX9568 Component Analog TV Sync Separator datasheet"
 
@@ -215,7 +215,7 @@ void HSyncHandler()
 #endif
   c = currentLine++ - SCANLINE_OFFSET;
   d = c;
-  
+
   if (c < MAX_SCANLINES) {
     if (interlace) {
       c += MAX_SCANLINES;
@@ -234,7 +234,7 @@ void HSyncHandler()
 void changeHandler()
 {
   uint16_t x;
- 
+
   x = (uint16_t)micros() - lastHsyncTime;
 
   // HSync period is 63.56μs and sync-to-blanking-end 9.48μs
@@ -289,12 +289,12 @@ void _resetCMP()
   pinMode(9, OUTPUT);
   //   Comparator's positive reference pin is connected to D9 via a low-pass RC filter
   //   (R = 3.9k and C = 0.1μF). In order to keep the voltage stable, PWM frequency on D9 pin
-  //   must be as high as possible: 
+  //   must be as high as possible:
   //       cf. gr_common/RLduino78/cores/RLduino78_basic.cpp
 
   analogWriteFrequency(32000L);
   analogWrite(9, brightnessThreshold);
-  
+
   pinMode(4, INPUT_PULLUP);
   // in order to attach interrupt #2 on D4, modification on RLduino78 files are necessary.
   // (not well documented yet)
@@ -314,7 +314,7 @@ void changeHandler()
   x -= 10;
 
   // on 8MHz/16MHz Arduinos micros() has a resolution of 8μs/4μs respectively.
-  // actual brightness information Arduino Pro Mini 8MHz can capture from each scan line is only 5 (or 6) samples. 
+  // actual brightness information Arduino Pro Mini 8MHz can capture from each scan line is only 5 (or 6) samples.
   x >>= 2;
 #if F_CPU == 16000000 // overclocked Arduino Pro Mini
   // store two bit per interrupt.
@@ -350,7 +350,7 @@ void _resetCMP()
   TCCR1B = TCCR1B & B11111000 | 0x01;
   analogWrite(9, brightnessThreshold);
 
-#if defined(__AVR_ATmega328P__) // Arduino Pro Mini  
+#if defined(__AVR_ATmega328P__) // Arduino Pro Mini
   analogComparator.setOn(AIN0, AIN1);
 #elif defined(__AVR_ATmega32U4__) // Arduino Pro Micro
   analogComparator.setOn(AIN0, A8);
@@ -364,10 +364,10 @@ void _resetVMD()
 {
   interlace = 0;
   nosignal = true;
-  
+
   pinMode(VSYNC_PIN, INPUT);
   pinMode(HSYNC_PIN, INPUT);
-  attachInterrupt(digitalPinToInterrupt(VSYNC_PIN), VSyncHandler, FALLING); 
+  attachInterrupt(digitalPinToInterrupt(VSYNC_PIN), VSyncHandler, FALLING);
   attachInterrupt(digitalPinToInterrupt(HSYNC_PIN), HSyncHandler, FALLING);
 
   _resetCMP(); // reset analog comparator
@@ -396,7 +396,7 @@ void checkVMD()
     case 2: // VMD working & no motion detected.
       break;
     case 3: // motion has been detected recently, do nothing for 5 sec.
-      if (n - epoch > 5000L) { 
+      if (n - epoch > 5000L) {
         motionEnd();
         return;
       }
@@ -409,7 +409,7 @@ void checkVMD()
     default:
       break;
   }
-  
+
   if (nosignal) {
     return;
   }
@@ -447,5 +447,3 @@ void checkVMD()
 }
 
 #endif
-
-

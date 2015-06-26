@@ -17,7 +17,7 @@
 //          1. use Arduino IDE 1.0.6+ and Teensyduino 1.20+
 //          2. comment out all unused #include as //#include (see Note* below)
 //
-//   (Note*: There is an infamous Arduino IDE's preprocessor bug (or something) that causes to ignore #ifdef/#else/#endif directives and forces 
+//   (Note*: There is an infamous Arduino IDE's preprocessor bug (or something) that causes to ignore #ifdef/#else/#endif directives and forces
 //    to compile unnecessary libraries.)
 //
 //   Intel Edison
@@ -63,11 +63,11 @@ boolean debug = false;
 
 //////////////////////////////////////////////////////////
 // Options:
-//   Choose either "#define" to use or "#undef" not to use. 
+//   Choose either "#define" to use or "#undef" not to use.
 //   if #define then don't forget to remove // before //#include
 
 //********************************************************
-// a_TimeAlarms: MewPro driven timelapse
+// b_TimeAlarms: MewPro driven timelapse
 #undef  USE_TIME_ALARMS
 // Time and TimeAlarms libraries are downloadable from
 //   http://www.pjrc.com/teensy/td_libs_Time.html
@@ -86,7 +86,7 @@ boolean debug = false;
 
 //********************************************************
 // c_I2C: I2C interface (THIS PART CAN'T BE OPTED OUT)
-// 
+//
 // Note: in order to use MewPro reliably, THE FOLLOWING MODIFICATIONS TO STANDARD ARDUINO LIBRARY SOURCE IS
 // STRONGLY RECOMMENDED:
 //
@@ -194,7 +194,7 @@ void setup()
 
   setupLED(); // onboard LED setup
   showMasterStatus();
-  pinMode(BPRDY, OUTPUT); digitalWrite(BPRDY, LOW);    // Show camera MewPro attach. 
+  pinMode(BPRDY, OUTPUT); digitalWrite(BPRDY, LOW);    // Show camera MewPro attach.
 
   // don't forget to switch pin configurations to INPUT.
   pinMode(I2CINT, INPUT);  // Teensy: default disabled
@@ -202,7 +202,7 @@ void setup()
   pinMode(PWRBTN, INPUT);  // default: analog input
 }
 
-void loop() 
+void loop()
 {
   // Attach or detach bacpac
   if (digitalRead(HBUSRDY) == HIGH) {
@@ -233,4 +233,3 @@ void loop()
   checkVMD();
   checkGenlock();
 }
-
