@@ -192,10 +192,10 @@ void roleChange()
     WIRE.write((byte) a);
     for (int i = 0; i < PAGESIZE; i++) {
       switch ((a + i) % 4) {
-        case 0: d = id; break; // major (MOD1): 4 for master, 5 for slave
-        case 1: d = 5; break;  // minor (MOD2) need to be greater than 4
-        case 2: d = 1; break;
-        case 3: d = (id == 4 ? 0x0a : 0x0b); break;
+      case 0: d = id; break; // major (MOD1): 4 for master, 5 for slave
+      case 1: d = 5; break;  // minor (MOD2) need to be greater than 4
+      case 2: d = 1; break;
+      case 3: d = (id == 4 ? 0x0a : 0x0b); break;
       }
       WIRE.write(d);
     }
@@ -297,10 +297,10 @@ void __romWrite(uint8_t id)
   byte d;
   for (int a = 0; a < ROMSIZE; a++) {
     switch (a % 4) {
-      case 0: d = id; break; // major (MOD1): 4 for master, 5 for slave
-      case 1: d = 5; break;  // minor (MOD2) need to be greater than 4
-      case 2: d = 1; break;
-      case 3: d = (id == 4 ? 0x0a : 0x0b); break;
+    case 0: d = id; break; // major (MOD1): 4 for master, 5 for slave
+    case 1: d = 5; break;  // minor (MOD2) need to be greater than 4
+    case 2: d = 1; break;
+    case 3: d = (id == 4 ? 0x0a : 0x0b); break;
     }
     EEPROM.write(a + EEPROMOFFSET, d);
   }
@@ -467,27 +467,27 @@ void SendBufToCamera() {
 
 void startRecording()
 {
-/* hgm: Not yet working, consider removing */
-/* #if defined(USE_GENLOCK) */
-/*   // Start SMARTY generating signals recording */
-/*   Serial.println(""); // hgm: why send this? */
-/*   Serial.println(F("SH01")); */
-/*   Serial.flush(); */
-/* #endif */
-/*   // Start cam recording */
+  /* hgm: Not yet working, consider removing */
+  /* #if defined(USE_GENLOCK) */
+  /*   // Start SMARTY generating signals recording */
+  /*   Serial.println(""); // hgm: why send this? */
+  /*   Serial.println(F("SH01")); */
+  /*   Serial.flush(); */
+  /* #endif */
+  /*   // Start cam recording */
   queueIn(F("SY1"));
 }
 
 void stopRecording()
 {
-/* hgm: Not yet working, consider deleting */
-/* #if defined(USE_GENLOCK) */
-/*   // Multi-camera stop recording */
-/*   Serial.println(""); // hgm: why send this? */
-/*   Serial.println(F("SH00")); */
-/*   Serial.flush(); */
-/* #endif */
-/*   // Stop cam recording */
+  /* hgm: Not yet working, consider deleting */
+  /* #if defined(USE_GENLOCK) */
+  /*   // Multi-camera stop recording */
+  /*   Serial.println(""); // hgm: why send this? */
+  /*   Serial.println(F("SH00")); */
+  /*   Serial.flush(); */
+  /* #endif */
+  /*   // Stop cam recording */
   queueIn(F("SY0"));
 }
 
@@ -507,12 +507,11 @@ void powerOn()
   pinMode(PWRBTN, INPUT);
 }
 
-void My_powerOff()
+void powerOff()
 {
-    //power off master first
-    buf[0] = 3; buf[1] = 'P'; buf[2] = 'W'; buf[3] = 0x00;
-    SendBufToCamera();
-
+  //power off master first
+  buf[0] = 3; buf[1] = 'P'; buf[2] = 'W'; buf[3] = 0x00;
+  SendBufToCamera();
 #ifdef USE_GENLOCK
   // send to Dongle
   Serial.println(""); // hgm: why send this?
@@ -552,44 +551,44 @@ void My_powerOff()
 
 /* } */
 
-void My_USBMode()
-{
-    //power off camera
-    buf[0] = 3; buf[1] = 'P'; buf[2] = 'W'; buf[3] = 0x00;
-    SendBufToCamera();
-    tdDone = false;
+/* void My_USBMode() */
+/* { */
+/*     //power off camera */
+/*     buf[0] = 3; buf[1] = 'P'; buf[2] = 'W'; buf[3] = 0x00; */
+/*     SendBufToCamera(); */
+/*     tdDone = false; */
 
-    //wait for some time
-    delay(5000);
+/*     //wait for some time */
+/*     delay(5000); */
 
-    //power on camera
-    pinMode(PWRBTN, OUTPUT);
-    digitalWrite(PWRBTN, LOW);
-    delay(1000);
-    tdDone = false;     //maybe comment this later
-    pinMode(PWRBTN, INPUT);
+/*     //power on camera */
+/*     pinMode(PWRBTN, OUTPUT); */
+/*     digitalWrite(PWRBTN, LOW); */
+/*     delay(1000); */
+/*     tdDone = false;     //maybe comment this later */
+/*     pinMode(PWRBTN, INPUT); */
 
-    //detach Mewpro
-    pinMode(BPRDY, INPUT);
-    delay(1000);
+/*     //detach Mewpro */
+/*     pinMode(BPRDY, INPUT); */
+/*     delay(1000); */
 
-//DO NOT UNCOMMENT codes below (not tested yet)
-/*
-#ifdef USE_GENLOCK
-    if (1) { // send to Dongle
-      Serial.println("");
-      Serial.println("^"));
-      Serial.flush();
-    }
-#endif
-*/
+/* //DO NOT UNCOMMENT codes below (not tested yet) */
+/* /\* */
+/* #ifdef USE_GENLOCK */
+/*     if (1) { // send to Dongle */
+/*       Serial.println(""); */
+/*       Serial.println("^")); */
+/*       Serial.flush(); */
+/*     } */
+/* #endif */
+/* *\/ */
 
-    noInterrupts(); //mask all interrupts so that no more SMARTY commands will be sent
-    __debug(F("Plug in USB cable now"));
-    Serial.flush();
-    while(1);       //dead loop to make sure Mewpro won't interfere USB transmission
+/*     noInterrupts(); //mask all interrupts so that no more SMARTY commands will be sent */
+/*     __debug(F("Plug in USB cable now")); */
+/*     Serial.flush(); */
+/*     while(1);       //dead loop to make sure Mewpro won't interfere USB transmission */
 
-}
+/* } */
 
 
 void checkCameraCommands()
@@ -599,142 +598,142 @@ void checkCameraCommands()
   // externally sent Serial message.
   while (inputAvailable())  {
     static boolean shiftable; // this flag used to convert 2-character
-															// hexidecimal numbers from Serial to a
-															// single data value (example: characters
-															// '0b' convert to value 11)
+                              // hexidecimal numbers from Serial to a
+                              // single data value (example: characters
+                              // '0b' convert to value 11)
     byte c = myRead();
-		/* hgm: not sure this works, need to find a way to view the queue */
+    /* hgm: not sure this works, need to find a way to view the queue */
     /* if(debug) { */
     /*   Serial.print("myRead()="); */
     /*   Serial.println((char)c); */
     /* } */
     switch (c) {
-      case ' ': // Ignore spaces
-        continue;
-  		case '\r': // carriage return (\r) or
-      case '\n': // newline (\n) finishes (and sends) I2C message
-        if (bufp != 1) {
-          buf[0] = bufp - 1;
-          bufp = 1;
-          SendBufToCamera();
-        }
-        return;
-
-/* //\***********************Adding our unique commands******************** */
-/*       case '#': */
-/*         bufp = 1; */
-/*         __debug(F("camera power off")); */
-/*         My_powerOff(); */
-/*         while (inputAvailable()) { */
-/*           if (myRead() == '\n') { */
-/*             return; */
-/*           } */
-/*         } */
-/*         return; */
-
-/*       case '$': */
-/*         bufp = 1; */
-/*         __debug(F("Start Recording!")); */
-/*         My_startRecording(); */
-/*         while (inputAvailable()) { */
-/*           if (myRead() == '\n') { */
-/*             return; */
-/*           } */
-/*         } */
-/*         return; */
-
-/*       case '%': */
-/*         bufp = 1; */
-/*         __debug(F("Stop Recording!")); */
-/*         My_stopRecording(); */
-/*         while (inputAvailable()) { */
-/*           if (myRead() == '\n') { */
-/*             return; */
-/*           } */
-/*         } */
-/*         return; */
-
-/*         case '^': */
-/*         bufp = 1; */
-/*         __debug(F("Getting into USB Mode")); */
-/*         My_USBMode(); */
-/*         while (inputAvailable()) { */
-/*           if (myRead() == '\n') { */
-/*             return; */
-/*           } */
-/*         } */
-/*         return; */
-
-/* //\*************************End of custom commands*********************************** */
-
-  		case '&': // toggle debug mode
+    case ' ': // Ignore spaces
+      continue;
+    case '\r': // carriage return (\r) or
+    case '\n': // newline (\n) finishes (and sends) I2C message
+      if (bufp != 1) {
+        buf[0] = bufp - 1;
         bufp = 1;
-        debug = !debug;
-        __debug(F("debug messages on"));
-        while (inputAvailable()) {
-          if (myRead() == '\n') {
-            return;
-          }
-        }
-        return;
-  		case '@': // power on system
-        bufp = 1;
-        __debug(F("camera power on"));
-        powerOn();
-        while (inputAvailable()) {
-          if (myRead() == '\n') {
-            return;
-          }
-        }
-        return;
-      case '!':
-        bufp = 1;
-        __debug(F("role change"));
-        roleChange();
-        while (inputAvailable()) {
-          if (myRead() == '\n') {
-            return;
-          }
-        }
-        return;
+        SendBufToCamera();
+      }
+      return;
 
-      case '/':
-        Serial.println(F(MEWPRO_FIRMWARE_VERSION));
-        Serial.flush();
-        return;
-      default:
-				// Every buf[] message has form:
-				//  buf[0]   buf[1] buf[2] buf[3]  ... buf[2+N]
-				//  [length] [cmd1] [cmd2] [data1] ... [dataN]
-				// therefore bufp >= 3 means processing a [dataX] byte in c
-        if (bufp >= 3 && isxdigit(c)) {
-					// convert integer value for char '8' to numerical value 8
-					//  (or char 'b' to numerical 11, char 'e' to 14, etc.)
-          c -= '0'; // move c from char '0' to '9' to integer 0 to 9
-          if (c >= 10) {
-						// this is an ASCII trick to convert both 'a' or 'A' to 1,
-						// convert 'c' and 'C' to 3, etc... then add 9 to get numerical
-						// value: a=10, b=11, c=12, etc.
-            c = (c & 0x0f) + 9;
-          }
+      /* //\***********************Adding our unique commands******************** */
+
+      /*       case '$': */
+      /*         bufp = 1; */
+      /*         __debug(F("Start Recording!")); */
+      /*         My_startRecording(); */
+      /*         while (inputAvailable()) { */
+      /*           if (myRead() == '\n') { */
+      /*             return; */
+      /*           } */
+      /*         } */
+      /*         return; */
+
+      /*       case '%': */
+      /*         bufp = 1; */
+      /*         __debug(F("Stop Recording!")); */
+      /*         My_stopRecording(); */
+      /*         while (inputAvailable()) { */
+      /*           if (myRead() == '\n') { */
+      /*             return; */
+      /*           } */
+      /*         } */
+      /*         return; */
+
+      /*         case '^': */
+      /*         bufp = 1; */
+      /*         __debug(F("Getting into USB Mode")); */
+      /*         My_USBMode(); */
+      /*         while (inputAvailable()) { */
+      /*           if (myRead() == '\n') { */
+      /*             return; */
+      /*           } */
+      /*         } */
+      /*         return; */
+
+      /* //\*************************End of custom commands*********************************** */
+
+    case '&': // toggle debug mode
+      bufp = 1;
+      debug = !debug;
+      __debug(F("debug messages on"));
+      while (inputAvailable()) {
+        if (myRead() == '\n') {
+          return;
         }
-        if (bufp < 4) { // processing [length] or [cmd], not [dataX]
-					// always reset shiftable to true before processing [dataX]
-          shiftable = true; 
-          buf[bufp++] = c; // add to buffer
+      }
+      return;
+    case '@': // power on system
+      bufp = 1;
+      __debug(F("camera power on"));
+      powerOn();
+      while (inputAvailable()) {
+        if (myRead() == '\n') {
+          return;
+        }
+      }
+      return;
+    case '#': // power off system
+      bufp = 1;
+      __debug(F("camera power off"));
+      powerOff();
+      while (inputAvailable()) {
+        if (myRead() == '\n') {
+          return;
+        }
+      }
+      return;
+    case '!':
+      bufp = 1;
+      __debug(F("role change"));
+      roleChange();
+      while (inputAvailable()) {
+        if (myRead() == '\n') {
+          return;
+        }
+      }
+      return;
+
+    case '/':
+      Serial.println(F(MEWPRO_FIRMWARE_VERSION));
+      Serial.flush();
+      return;
+    default:
+      // Every buf[] message has form:
+      //  buf[0]   buf[1] buf[2] buf[3]  ... buf[2+N]
+      //  [length] [cmd1] [cmd2] [data1] ... [dataN]
+      // therefore bufp >= 3 means processing a [dataX] byte in c
+      if (bufp >= 3 && isxdigit(c)) {
+        // convert integer value for char '8' to numerical value 8
+        //  (or char 'b' to numerical 11, char 'e' to 14, etc.)
+        c -= '0'; // move c from char '0' to '9' to integer 0 to 9
+        if (c >= 10) {
+          // this is an ASCII trick to convert both 'a' or 'A' to 1,
+          // convert 'c' and 'C' to 3, etc... then add 9 to get numerical
+          // value: a=10, b=11, c=12, etc.
+          c = (c & 0x0f) + 9;
+        }
+      }
+      if (bufp < 4) { // processing [length] or [cmd], not [dataX]
+        // always reset shiftable to true before processing [dataX]
+        shiftable = true; 
+        buf[bufp++] = c; // add to buffer
+      } else {
+        if (shiftable) {
+          // processing 2nd char of 2-char number (ex: the 'b' in '0b')
+          // so bit-shift the present value (mult by 16) and add the LSB
+          buf[bufp-1] = (buf[bufp-1] << 4) + c;
         } else {
-          if (shiftable) {
-						// processing 2nd char of 2-char number (ex: the 'b' in '0b')
-						// so bit-shift the present value (mult by 16) and add the LSB
-            buf[bufp-1] = (buf[bufp-1] << 4) + c;
-          } else {
-						// either processing 1st char of 2-char number, or just a
-						// single-character value
-            buf[bufp++] = c;
-          }
-          shiftable = !shiftable;
+          // either processing 1st char of 2-char number, or just a
+          // single-character value
+          buf[bufp++] = c;
         }
-        break;
+        shiftable = !shiftable;
+      }
+      break;
     }
   }
 }

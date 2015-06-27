@@ -23,14 +23,14 @@ void bacpacCommand()
     ledOff();
     memcpy_P(buf, validationString, sizeof validationString);
     SendBufToCamera();
-// hgm: I am experimenting with sending @ in a diff part of code, inside powerOn()
-//#ifdef USE_GENLOCK
-//    if (1) { // send to Dongle
-//      Serial.println("");
-//      Serial.println('@');  // power on
-//      Serial.flush();
-//    }
-//#endif
+    // hgm: I am experimenting with sending @ in a diff part of code, inside powerOn()
+    //#ifdef USE_GENLOCK
+    //    if (1) { // send to Dongle
+    //      Serial.println("");
+    //      Serial.println('@');  // power on
+    //      Serial.flush();
+    //    }
+    //#endif
     delay(200); // need a short delay the validation string to be read by camera
     queueIn(F("cv"));
     return;
@@ -42,7 +42,7 @@ void bacpacCommand()
     buf[0] = 1; buf[1] = 0; // "ok"
     SendBufToCamera();
     if (recv[3] == 0x0c) {
-//      queueIn(F("XS1"));
+      //      queueIn(F("XS1"));
     }
     return;
   case SET_BACPAC_HEARTBEAT: // HB
@@ -50,9 +50,9 @@ void bacpacCommand()
     buf[0] = 1; buf[1] = 0; // "ok"
     SendBufToCamera();
     if (isMaster()) {
-//         baterry:remaining:photos:seconds:videos:media:
-//         03      FFFF      0000   FFFF    0000   00    FFFFFF
-//      queueIn(F("XS0303FFFF0000FFFF000000FFFFFF")); // dummy
+      // baterry:remaining:photos:seconds:videos:media:
+      // 03      FFFF      0000   FFFF    0000   00    FFFFFF
+      // queueIn(F("XS0303FFFF0000FFFF000000FFFFFF")); // dummy
       return;
     }
 #endif
@@ -125,7 +125,7 @@ void bacpacCommand()
       printHex(recv[16], false);
       Serial.println("");
     }
- #endif
+#endif
     return;
   case SET_BACPAC_SHUTTER_ACTION: // SH
     // shutter button of master is pressed
@@ -177,9 +177,9 @@ void checkBacpacCommands()
 #ifdef USE_GENLOCK
           if (isMaster()) {
             __debug(F("master bacpac and use genlock"));
-//            resetVMD();
-//            queueIn(F("VO1")); // SET_CAMERA_VIDEO_OUTPUT to herobus
-              userSettings();
+            // resetVMD();
+            // queueIn(F("VO1")); // SET_CAMERA_VIDEO_OUTPUT to herobus
+            userSettings();
           }
 #endif
           // td lets camera into 3D mode
@@ -239,7 +239,7 @@ void checkBacpacCommands()
         ; // do nothing
       }
     } else {
-        bacpacCommand();
+      bacpacCommand();
     }
     recvq = false;
   }
