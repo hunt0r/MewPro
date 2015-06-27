@@ -23,13 +23,14 @@ void bacpacCommand()
     ledOff();
     memcpy_P(buf, validationString, sizeof validationString);
     SendBufToCamera();
-#ifdef USE_GENLOCK
-    if (1) { // send to Dongle
-      Serial.println("");
-      Serial.println('@');  // power on
-      Serial.flush();
-    }
-#endif
+// hgm: I am experimenting with sending @ in a diff part of code, inside powerOn()
+//#ifdef USE_GENLOCK
+//    if (1) { // send to Dongle
+//      Serial.println("");
+//      Serial.println('@');  // power on
+//      Serial.flush();
+//    }
+//#endif
     delay(200); // need a short delay the validation string to be read by camera
     queueIn(F("cv"));
     return;
@@ -176,11 +177,10 @@ void checkBacpacCommands()
   }
 #endif
   if (recvq) {
-    waiting = false;
-    _printInput();
-    if (!(recv[0] & 0x80)) {// information bytes
-      if (recv[0] == 0x25) {
-        // initialize bacpac
+    waiting = false; // only time waiting is set back to false
+    _printInput(); // show message via Serial if debug==true
+    if (!(recv[0] & 0x80)) { // information bytes
+      if (recv[0] == 0x25) { // 0x25 is initialize bacpac msg
         if (!tdDone) { // this is first time to see vs
 #ifdef USE_GENLOCK
           if (isMaster()) {
@@ -192,7 +192,7 @@ void checkBacpacCommands()
 #endif
           // td lets camera into 3D mode
           // camera will send HBFF
-          queueIn(F("td"));
+          queueIn(F("td")); // request td settings from camera
           // unless this is master and USE_GENLOCK, after receiving HBFF we are
           // going to emulate detach bacpac
         } else {
@@ -202,7 +202,7 @@ void checkBacpacCommands()
           //   > HB FF
           // (emulate detach bacpac)
           //   > vs
-          if (isMaster()) {
+          if (isMaster()) { // hgm: why is this here?
             __debug(F("master bacpac and not use genlock"));
             resetVMD();
             queueIn(F("VO1")); // SET_CAMERA_VIDEO_OUTPUT to herobus
@@ -210,9 +210,9 @@ void checkBacpacCommands()
           } else {
 #ifdef USE_GENLOCK
             __debug(F("slave bacpac and use genlock (not supported yet)"));
-            memcpy_P(buf, tmptd, TD_BUFFER_SIZE);
-            memcpy_P(td, tmptd, TD_BUFFER_SIZE);
-            SendBufToCamera();
+            memcpy_P(buf, tmptd, TD_BUFFER_SIZE); // put dummy value in buf for cam
+            memcpy_P(td, tmptd, TD_BUFFER_SIZE); // put dummy value in td table
+            SendBufToCamera(); // set camera to dummy td value
 #else
             __debug(F("slave bacpac and not use genlock"));
             queueIn(F("XS1"));
@@ -223,7 +223,7 @@ void checkBacpacCommands()
       } else if (recv[0] == 0x27) {
         // Usual packet length (recv[0]) is 0 or 1.
         // Packet length 0x27 does not exist but SMARTY_START
-        memcpy((char *)td+1, recv, TD_BUFFER_SIZE-1);
+        memcpy((char *)td+1, recv, TD_BUFFER_SIZE-1); // load received TD into td[] message
         td[0] = TD_BUFFER_SIZE-1; td[1] = 'T'; td[2] = 'D'; // get ready to submit to slave
 #ifdef USE_GENLOCK
         if (isMaster()) {
