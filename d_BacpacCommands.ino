@@ -129,14 +129,6 @@ void bacpacCommand()
     return;
   case SET_BACPAC_SHUTTER_ACTION: // SH
     // shutter button of master is pressed
-#ifdef USE_GENLOCK
-    if (1) { // send to Dongle
-      Serial.print(F("SH"));
-      printHex(recv[3], true);
-      Serial.println("");
-      Serial.flush();
-    }
-#endif
     buf[0] = 3; buf[1] = 'S'; buf[2] = 'Y'; buf[3] = recv[3];
     SendBufToCamera();
     return;
@@ -229,6 +221,9 @@ void checkBacpacCommands()
         if (isMaster()) {
           queueIn(F("FN0C")); // emulate slave ready
           // send camera config to master dongle
+          // Upside is always up
+          td[TD_FLIP_MIRROR] = 1;
+          //
           Serial.print(F("TD"));
           for (int i = 3; i < TD_BUFFER_SIZE; i++) {
             printHex(td[i], true);
