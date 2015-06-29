@@ -20,9 +20,10 @@ void bacpacCommand()
   int command = (recv[1] << 8) + recv[2];
   switch (command) {
   case GET_BACPAC_PROTOCOL_VERSION: // vs
+    while (digitalRead(I2CINT) != HIGH) { // wait until camera pullups I2CINT
+      ;
+    }
     ledOff();
-    memcpy_P(buf, validationString, sizeof validationString);
-    SendBufToCamera();
     // hgm: I am experimenting with sending @ in a diff part of code, inside powerOn()
     //#ifdef USE_GENLOCK
     //    if (1) { // send to Dongle
@@ -31,6 +32,8 @@ void bacpacCommand()
     //      Serial.flush();
     //    }
     //#endif
+    memcpy_P(buf, validationString, sizeof validationString);
+    SendBufToCamera();
     delay(200); // need a short delay the validation string to be read by camera
     queueIn(F("cv"));
     return;
