@@ -24,14 +24,6 @@ void bacpacCommand()
       ;
     }
     ledOff();
-    // hgm: I am experimenting with sending @ in a diff part of code, inside powerOn()
-    //#ifdef USE_GENLOCK
-    //    if (1) { // send to Dongle
-    //      Serial.println("");
-    //      Serial.println('@');  // power on
-    //      Serial.flush();
-    //    }
-    //#endif
     memcpy_P(buf, validationString, sizeof validationString);
     SendBufToCamera();
     delay(200); // need a short delay the validation string to be read by camera
