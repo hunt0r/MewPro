@@ -520,77 +520,6 @@ void powerOff()
 #endif
 }
 
-/* HGM: these functions still in development */
-/* void My_startRecording() */
-/* { */
-/*     buf[0] = 3; buf[1] = 'S'; buf[2] = 'Y'; buf[3] = 0x01; */
-/*     SendBufToCamera(); */
-
-/* #ifdef USE_GENLOCK */
-/*     if (1) { // send to Dongle */
-/*       Serial.println(""); */
-/*       Serial.println(F("SH01")); */
-/*       Serial.flush(); */
-/*     } */
-/* #endif */
-
-/* } */
-
-/* void My_stopRecording() */
-/* { */
-/*     buf[0] = 3; buf[1] = 'S'; buf[2] = 'Y'; buf[3] = 0x00; */
-/*     SendBufToCamera(); */
-
-/* #ifdef USE_GENLOCK */
-/*     if (1) { // send to Dongle */
-/*       Serial.println(""); */
-/*       Serial.println(F("SH00")); */
-/*       Serial.flush(); */
-/*     } */
-/* #endif */
-
-/* } */
-
-/* void My_USBMode() */
-/* { */
-/*     //power off camera */
-/*     buf[0] = 3; buf[1] = 'P'; buf[2] = 'W'; buf[3] = 0x00; */
-/*     SendBufToCamera(); */
-/*     tdDone = false; */
-
-/*     //wait for some time */
-/*     delay(5000); */
-
-/*     //power on camera */
-/*     pinMode(PWRBTN, OUTPUT); */
-/*     digitalWrite(PWRBTN, LOW); */
-/*     delay(1000); */
-/*     tdDone = false;     //maybe comment this later */
-/*     pinMode(PWRBTN, INPUT); */
-
-/*     //detach Mewpro */
-/*     pinMode(BPRDY, INPUT); */
-/*     delay(1000); */
-
-/* //DO NOT UNCOMMENT codes below (not tested yet) */
-/* /\* */
-/* #ifdef USE_GENLOCK */
-/*     if (1) { // send to Dongle */
-/*       Serial.println(""); */
-/*       Serial.println("^")); */
-/*       Serial.flush(); */
-/*     } */
-/* #endif */
-/* *\/ */
-
-/*     noInterrupts(); //mask all interrupts so that no more SMARTY commands will be sent */
-/*     __debug(F("Plug in USB cable now")); */
-/*     Serial.flush(); */
-/*     while(1);       //dead loop to make sure Mewpro won't interfere USB transmission */
-
-/* } */
-
-
 void checkCameraCommands()
 { // CameraCommands come via the Serial communication.  They may be from
   // the GenlockDongle, from a computer connected via the Arduino Serial
@@ -602,11 +531,10 @@ void checkCameraCommands()
                               // single data value (example: characters
                               // '0b' convert to value 11)
     byte c = myRead();
-    /* hgm: not sure this works, need to find a way to view the queue */
-    /* if(debug) { */
-    /*   Serial.print("myRead()="); */
-    /*   Serial.println((char)c); */
-    /* } */
+    // hgm: don't think this works, but we need to find a way to view the
+    //      queue when in debug mode
+    // if(debug) { Serial.print("myRead()=");
+    // Serial.println((char)c); }
     switch (c) {
     case ' ': // Ignore spaces
       continue;
@@ -618,44 +546,6 @@ void checkCameraCommands()
         SendBufToCamera();
       }
       return;
-
-      /* //\***********************Adding our unique commands******************** */
-
-      /*       case '$': */
-      /*         bufp = 1; */
-      /*         __debug(F("Start Recording!")); */
-      /*         My_startRecording(); */
-      /*         while (inputAvailable()) { */
-      /*           if (myRead() == '\n') { */
-      /*             return; */
-      /*           } */
-      /*         } */
-      /*         return; */
-
-      /*       case '%': */
-      /*         bufp = 1; */
-      /*         __debug(F("Stop Recording!")); */
-      /*         My_stopRecording(); */
-      /*         while (inputAvailable()) { */
-      /*           if (myRead() == '\n') { */
-      /*             return; */
-      /*           } */
-      /*         } */
-      /*         return; */
-
-      /*         case '^': */
-      /*         bufp = 1; */
-      /*         __debug(F("Getting into USB Mode")); */
-      /*         My_USBMode(); */
-      /*         while (inputAvailable()) { */
-      /*           if (myRead() == '\n') { */
-      /*             return; */
-      /*           } */
-      /*         } */
-      /*         return; */
-
-      /* //\*************************End of custom commands*********************************** */
-
     case '&': // toggle debug mode
       bufp = 1;
       debug = !debug;
@@ -719,7 +609,7 @@ void checkCameraCommands()
       }
       if (bufp < 4) { // processing [length] or [cmd], not [dataX]
         // always reset shiftable to true before processing [dataX]
-        shiftable = true; 
+        shiftable = true;
         buf[bufp++] = c; // add to buffer
       } else {
         if (shiftable) {
