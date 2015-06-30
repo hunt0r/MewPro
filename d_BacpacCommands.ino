@@ -8,8 +8,8 @@ void emulateDetachBacpac()
   pinMode(BPRDY, INPUT);
   delay(1000);
   // attach bacpac again
-  pinMode(BPRDY, OUTPUT);
-  digitalWrite(BPRDY, LOW);
+  stayInvisibleOrShowBPRDY(); // If Master mode, show ready to camera.  If
+                              // slave mode, MewPro stays invisible
 }
 
 // what does this mean? i have no idea...

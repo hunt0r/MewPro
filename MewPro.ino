@@ -146,7 +146,7 @@ boolean debug = false;
 //********************************************************
 // k_Genlock: Generator Lock
 //   Note: MewPro #0 in dual dongle configuration should always boolean debug = false;
-#define  USE_GENLOCK
+#undef  USE_GENLOCK
 
 // it is better to define this when RXI is connected to nothing (eg. MewPro #0 of Genlock system)
 #undef  UART_RECEIVER_DISABLE
@@ -194,7 +194,8 @@ void setup()
 
   setupLED(); // onboard LED setup
   showMasterStatus();
-  pinMode(BPRDY, OUTPUT); digitalWrite(BPRDY, LOW);    // Show camera MewPro attach.
+  stayInvisibleOrShowBPRDY(); // If Master mode, show ready to camera.  If
+                              // slave mode, MewPro stays invisible
 
   // don't forget to switch pin configurations to INPUT.
   pinMode(I2CINT, INPUT);  // Teensy: default disabled

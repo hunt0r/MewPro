@@ -145,6 +145,19 @@ boolean isMaster()
   return (eepromId == ID_MASTER);
 }
 
+// If MewPro in Master Mode, show bacpac ready to take control.  If MewPro
+// in Slave Mode, trick camera into ignoring MewPro (so that USB mode
+// works)
+void stayInvisibleOrShowBPRDY()
+{
+  if (isMaster()){ // show camera BPRDY to take control
+    pinMode(BPRDY, OUTPUT);
+    digitalWrite(BPRDY, LOW);
+  } else { // remain invisible (so camera acts independently)
+     pinMode(BPRDY, INPUT);
+  }
+}
+
 // Show Master/Slave via LED: 1 blink for Slave, 2 for Master
 void showMasterStatus()
 {
@@ -202,11 +215,11 @@ void roleChange()
     WIRE.endTransmission(I2C_STOP);
     delayMicroseconds(WRITECYCLETIME);
   }
-  pinMode(BPRDY, OUTPUT);
   eepromId = id;
   isMaster() ? __debug(F(" to master")) : __debug(F(" to slave"));
   showMasterStatus(); // show master/slave status via LED
-  digitalWrite(BPRDY, LOW);
+  stayInvisibleOrShowBPRDY(); // If Master mode, show ready to camera.  If
+                              // slave mode, MewPro stays invisible
   resetI2C();
 }
 
@@ -329,11 +342,11 @@ void roleChange()
 
   id = isMaster() ? ID_SLAVE : ID_MASTER;
   __romWrite(id);
-  pinMode(BPRDY, OUTPUT);
   eepromId = id;
   isMaster() ? __debug(F(" to master")) : __debug(F(" to slave"));
   showMasterStatus(); // show master/slave status via LED
-  digitalWrite(BPRDY, LOW);
+  stayInvisibleOrShowBPRDY(); // If Master mode, show ready to camera.  If
+                              // slave mode, MewPro stays invisible
 }
 // --------------------------------------------------------------------------------
 #endif // __AVR_ATtiny1634

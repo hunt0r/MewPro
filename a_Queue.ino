@@ -24,12 +24,16 @@ boolean inputAvailable()
 byte myRead()
 { // This reads Serial messages.  First from the queue, then from the
   // Serial monitor line
+  byte c;
   if (queueb != queuee) {
-    byte c = queue[queueb];
+    c = queue[queueb];
     queueb = (queueb + 1) % MEWPRO_BUFFER_LENGTH;
     return c;
+  } else {
+    c = Serial.read();
+    Serial.write(c); // echo out Serial.read() bytes for other MewPros
   }
-  return Serial.read();
+  return c;
 }
 
 // Utility functions
