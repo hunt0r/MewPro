@@ -11,46 +11,11 @@
 //          w/ Arduino IDE 1.5.7+
 //          if you have troubles in compiling unused or nonexistent libraries, simply comment out #include line as //#include (see Note* below)
 //
-//   Teensy 3.x / Teensy LC
-//          [POWER SUPPLY: The VIN-VUSB pad connection on the bottom side of Teensy 3.x/LC needs to be cut.]
-//          To compile the code with Teensy 3.x/LC:
-//          1. use Arduino IDE 1.0.6+ and Teensyduino 1.20+
-//          2. comment out all unused #include as //#include (see Note* below)
-//
-//   (Note*: There is an infamous Arduino IDE's preprocessor bug (or something) that causes to ignore #ifdef/#else/#endif directives and forces
-//    to compile unnecessary libraries.)
-//
-//   Intel Edison
-//          Since Intel Edison can not work as I2C slave, it requires an I2C proxy.
-//
-//   GR-KURUMI
-//          [POWER SUPPLY: The dummy resistor soldered on JP1 of the MewPro board needs replacement w/ a general purpose diode of >100mA w/ dropoff voltage 1V
-//           (eg. Bourns S0180); Anode should be located on the Herobus side and Cathode on the Arduino side.]
-//          To compile the code with GR-KURUMI using Renesas web compiler http://www.renesas.com/products/promotion/gr/index.jsp#cloud :
-//          1. open a new project with the template GR-KURUMI_Sketch_V1.04.zip.
-//          2. create a folder named MewPro and upload all the files there.
-//          3. at project's home directory, replace all the lines of gr_scketch.cpp by the following code (BEGIN / END lines should be excluded).
-/* BEGIN copy
-#include <RLduino78.h>
-#include "MewPro/MewPro.ino"
-#include "MewPro/a_Queue.ino"
-#include "MewPro/b_TimeAlarms.ino"
-#include "MewPro/c_I2C.ino"
-#include "MewPro/d_BacpacCommands.ino"
-#include "MewPro/e_Shutter.ino"
-#include "MewPro/f_Switch.ino"
-#include "MewPro/g_IRremote.ino"
-#include "MewPro/h_LightSensor.ino"
-#include "MewPro/i_PIRsensor.ino"
-#include "MewPro/j_VideoMotionDetect.ino"
-#include "MewPro/k_Genlock.ino"
-END copy */
-//
 
 //   Copyright (c) 2014-2015 orangkucing
 //
 // MewPro firmware version string for maintenance
-#define MEWPRO_FIRMWARE_VERSION "2015061900"
+#define MEWPRO_FIRMWARE_VERSION "2015071008"  // hgm: I append "08" to the end to mark as ours
 
 //
 #include <Arduino.h>
@@ -65,24 +30,6 @@ boolean debug = false;
 // Options:
 //   Choose either "#define" to use or "#undef" not to use.
 //   if #define then don't forget to remove // before //#include
-
-//********************************************************
-// b_TimeAlarms: MewPro driven timelapse
-#undef  USE_TIME_ALARMS
-// Time and TimeAlarms libraries are downloadable from
-//   http://www.pjrc.com/teensy/td_libs_Time.html
-//   and http://www.pjrc.com/teensy/td_libs_TimeAlarms.html
-// In order to compile the code on Pro Mini 328, find the following and edit the first line of them
-//   #if defined(__AVR__)
-//   #include <avr/pgmspace.h>
-//   #else
-// to
-//   #if defined(__AVR__) && !defined(__AVR_ATmega328P__)
-//   #include <avr/pgmspace.h>
-//   #else
-// appeared in Documents/Arduino/libraries/Time/DateStrings.cpp
-//#include <Time.h> // *** please comment out this line if USE_TIME_ALARMS is not defined ***
-//#include <TimeAlarms.h> // *** please comment out this line if USE_TIME_ALARMS is not defined ***
 
 //********************************************************
 // c_I2C: I2C interface (THIS PART CAN'T BE OPTED OUT)
@@ -103,61 +50,15 @@ boolean debug = false;
 #error Please modify Arduino Wire library source code to increase the I2C buffer size
 #endif
 //
-// Teensy 3.0 or 3.1 or LC
-//#include <i2c_t3.h> // *** please comment out this line if __MK20DX256__ and __MK20DX128__ and __MKL26Z64__ are not defined ***
-//
 // ATtiny1634 core https://github.com/SpenceKonde/arduino-tiny-841
 //    WireS library is downloadable from https://github.com/orangkucing/WireS
 //#include <WireS.h> // *** please comment out this line if __AVR_ATtiny1634__ is not defined ***
-
-#undef  USE_I2C_PROXY // define if using I2C proxy and this CPU acts as I2C master
-
-//********************************************************
-// e_Shutters: A remote shutters without contact bounce or chatter
-#undef  USE_SHUTTER
-
-//********************************************************
-// f_Switches: One or two mechanical switches
-#undef  USE_SWITCHES
-
-//********************************************************
-// g_IRremote: IR remote controller
-#undef  USE_IR_REMOTE
-// IRremote2 is downloadable from https://github.com/enternoescape/Arduino-IRremote-Due
-// (this works not only on Due but also on Pro Mini etc.)
-//#include <IRremote2.h> // *** please comment out this line if USE_IR_REMOTE is not defined ***
-
-//********************************************************
-// h_LightSensor: Ambient light sensor
-#undef  USE_LIGHT_SENSOR
-
-//********************************************************
-// i_PIRsensor: Passive InfraRed motion sensor
-#undef  USE_PIR_SENSOR
-
-//********************************************************
-// j_VideoMotionDetect: Video Motion Detector
-//   Video motion detect consumes almost all the dynamic memory. So if you want to use this then #undef all options above.
-#undef  USE_VIDEOMOTION
-// The part of code utilizes the following library except GR-KURUMI. Please download and install:
-//   https://github.com/orangkucing/analogComp
-//#include "analogComp.h" // *** please comment out this line if USE_VIDEOMOTION is not defined or GR-KURUMI ***
-
-//********************************************************
-// k_Genlock: Generator Lock
-//   Note: MewPro #0 in dual dongle configuration should always boolean debug = false;
-#undef  USE_GENLOCK
 
 // it is better to define this when RXI is connected to nothing (eg. MewPro #0 of Genlock system)
 #undef  UART_RECEIVER_DISABLE
 
 // end of Options
 //////////////////////////////////////////////////////////
-
-// if __AVR_ATmega32U4__ (Leonardo or Pro Micro) then use Serial1 (TTL) instead of Serial (USB) to communicate with genlock dongle
-#if defined(USE_GENLOCK) && defined(__AVR_ATmega32U4__)
-#define Serial Serial1
-#endif
 
 boolean lastHerobusState = LOW;  // Will be HIGH when camera attached.
 int eepromId = 0;
@@ -168,7 +69,7 @@ void userSettings()
   // you can set put any camera commands here. For example:
   // queueIn("AI1");
   // queueIn("TI5");
-  // showMasterStatus(); // show whether master or slave mode via LED
+  // queueIn("TD 0f 07 04 03 02 01 00 04 ff 01 09 00 00 02 00 01 00 01 00 00 00 05 04 00 00 00 00 00 00 00 00 00 01 00 00 00 00 0a");
 }
 
 void setup()
@@ -185,17 +86,11 @@ void setup()
 #endif
 #endif
 
-  setupShutter();
-  setupSwitch();
-  setupIRremote();
-  setupLightSensor();
-  setupPIRSensor();
   setupGenlock();
-
   setupLED(); // onboard LED setup
-  showMasterStatus();
-  stayInvisibleOrShowBPRDY(); // If Master mode, show ready to camera.  If
-                              // slave mode, MewPro stays invisible
+  showModeOnLED();
+  stayInvisibleOrShowBPRDY(); // If Solocam mode, show ready to camera.  If
+                              // USBmode, MewPro stays invisible
 
   // don't forget to switch pin configurations to INPUT.
   pinMode(I2CINT, INPUT);  // Teensy: default disabled
@@ -208,12 +103,10 @@ void loop()
   // Attach or detach bacpac
   if (digitalRead(HBUSRDY) == HIGH) {
     if (lastHerobusState != HIGH) { // Bacpac just attached
-#if !defined(USE_I2C_PROXY)
       pinMode(I2CINT, OUTPUT); digitalWrite(I2CINT, HIGH);
-#endif
       lastHerobusState = HIGH;
       if (eepromId == 0) {
-        isMaster(); // determine master/slave and resetI2C()
+        isSolocam(); // determine Solocam/USBmode and resetI2C()
       } else {
         resetI2C();
       }
@@ -224,13 +117,7 @@ void loop()
       lastHerobusState = LOW;
     }
   }
-  checkTimeAlarms();
   checkBacpacCommands();
   checkCameraCommands();
-  checkSwitch();
-  checkIRremote();
-  checkLightSensor();
-  checkPIRSensor();
-  checkVMD();
   checkGenlock();
 }

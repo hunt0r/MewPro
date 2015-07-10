@@ -8,8 +8,8 @@ void emulateDetachBacpac()
   pinMode(BPRDY, INPUT);
   delay(1000);
   // attach bacpac again
-  stayInvisibleOrShowBPRDY(); // If Master mode, show ready to camera.  If
-                              // slave mode, MewPro stays invisible
+  stayInvisibleOrShowBPRDY(); // If Solocam mode, show ready to camera.  If
+                              // USBmode, MewPro stays invisible
 }
 
 // what does this mean? i have no idea...
@@ -41,16 +41,6 @@ void bacpacCommand()
     }
     return;
   case SET_BACPAC_HEARTBEAT: // HB
-#ifdef USE_GENLOCK
-    buf[0] = 1; buf[1] = 0; // "ok"
-    SendBufToCamera();
-    if (isMaster()) {
-      // baterry:remaining:photos:seconds:videos:media:
-      // 03      FFFF      0000   FFFF    0000   00    FFFFFF
-      // queueIn(F("XS0303FFFF0000FFFF000000FFFFFF")); // dummy
-      return;
-    }
-#endif
     if (!tdDone) {
       emulateDetachBacpac();
     }
@@ -58,12 +48,6 @@ void bacpacCommand()
     return;
   case SET_BACPAC_POWER_DOWN: // PW
     tdDone = false;
-#ifdef USE_GENLOCK
-    if (1) { // send to Dongle
-      Serial.println(F("PW00"));
-      Serial.flush();
-    }
-#endif
     return;
   case SET_BACPAC_3D_SYNC_READY: // SR
     switch (recv[3]) {
@@ -91,7 +75,6 @@ void bacpacCommand()
   case SET_BACPAC_WIFI: // WI
     return;
   case SET_BACPAC_SLAVE_SETTINGS: // XS
-#ifndef USE_GENLOCK
     // every second message will be off if we send "XS0" here
     queueIn(F("XS0"));
     if (debug) {
@@ -120,7 +103,6 @@ void bacpacCommand()
       printHex(recv[16], false);
       Serial.println("");
     }
-#endif
     return;
   case SET_BACPAC_SHUTTER_ACTION: // SH
     // shutter button of master is pressed
@@ -129,24 +111,13 @@ void bacpacCommand()
     return;
   case SET_BACPAC_DATE_TIME: // TM
     memcpy((char *)td+TD_DATE_TIME_year, (char *)recv+TD_DATE_TIME_year, 6);
-    _setTime();
-    buf[0] = 1; buf[1] = 0; // "ok"
+		// _setTime(); HGM: DELETE
+		buf[0] = 1; buf[1] = 0; // "ok"
     SendBufToCamera();
     return;
   default:
     break;
   }
-#ifdef USE_GENLOCK
-  // other commands are listed in tdtable[]
-  for (int offset = 0x09; offset < TD_BUFFER_SIZE; offset++) {
-    if (pgm_read_word(tdtable + offset - 0x09) == command) {
-      buf[0] = 1; buf[1] = 0; // Dual Hero doesn't understand each command
-      SendBufToCamera();
-      queueIn(F("td")); // let camera report setting in full
-      return;
-    }
-  }
-#endif
 }
 
 // dummy setting: should be overridden soon
@@ -158,30 +129,16 @@ const char tmptd[TD_BUFFER_SIZE] PROGMEM = {
 
 void checkBacpacCommands()
 {
-#ifdef USE_I2C_PROXY
-  if (digitalRead(I2CINT) == LOW) {
-    receiveHandler();
-  }
-#endif
   if (recvq) {
     waiting = false; // only time waiting is set back to false
     _printInput(); // show message via Serial if debug==true
     if (!(recv[0] & 0x80)) { // information bytes
       if (recv[0] == 0x25) { // 0x25 is initialize bacpac msg
         if (!tdDone) { // this is first time to see vs
-#ifdef USE_GENLOCK
-          if (isMaster()) {
-            __debug(F("master bacpac and use genlock"));
-            // resetVMD();
-            // queueIn(F("VO1")); // SET_CAMERA_VIDEO_OUTPUT to herobus
-            userSettings();
-          }
-#endif
           // td lets camera into 3D mode
           // camera will send HBFF
           queueIn(F("td")); // request td settings from camera
-          // unless this is master and USE_GENLOCK, after receiving HBFF we are
-          // going to emulate detach bacpac
+          // after receiving HBFF we are going to emulate detach bacpac
         } else {
           // this is second time to see vs, i.e.,
           //   > vs
@@ -189,21 +146,13 @@ void checkBacpacCommands()
           //   > HB FF
           // (emulate detach bacpac)
           //   > vs
-          if (isMaster()) { // hgm: why is this here?
-            __debug(F("master bacpac and not use genlock"));
-            resetVMD();
+          if (isSolocam()) { // hgm: why is this here?
+            __debug(F("Solocam bacpac and not use genlock"));
             queueIn(F("VO1")); // SET_CAMERA_VIDEO_OUTPUT to herobus
             userSettings();
           } else {
-#ifdef USE_GENLOCK
-            __debug(F("slave bacpac and use genlock (not supported yet)"));
-            memcpy_P(buf, tmptd, TD_BUFFER_SIZE); // put dummy value in buf for cam
-            memcpy_P(td, tmptd, TD_BUFFER_SIZE); // put dummy value in td table
-            SendBufToCamera(); // set camera to dummy td value
-#else
-            __debug(F("slave bacpac and not use genlock"));
+            __debug(F("USBmode bacpac and not use genlock"));
             queueIn(F("XS1"));
-#endif
             userSettings();
           }
         }
@@ -212,24 +161,6 @@ void checkBacpacCommands()
         // Packet length 0x27 does not exist but SMARTY_START
         memcpy((char *)td+1, recv, TD_BUFFER_SIZE-1); // load received TD into td[] message
         td[0] = TD_BUFFER_SIZE-1; td[1] = 'T'; td[2] = 'D'; // get ready to submit to slave
-#ifdef USE_GENLOCK
-        if (isMaster()) {
-          queueIn(F("FN0C")); // emulate slave ready
-          // send camera config to master dongle
-          // Upside is always up
-          td[TD_FLIP_MIRROR] = 1;
-          //
-          Serial.print(F("TD"));
-          for (int i = 3; i < TD_BUFFER_SIZE; i++) {
-            printHex(td[i], true);
-          }
-          Serial.println("");
-          Serial.flush();
-        }
-#else
-        _setTime();
-        setupTimeAlarms();
-#endif
       } else {
         ; // do nothing
       }

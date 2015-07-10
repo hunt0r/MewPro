@@ -16,8 +16,8 @@
 #endif
 
 // GoPro Dual Hero EEPROM IDs
-const int ID_MASTER = 4;
-const int ID_SLAVE  = 5;
+const int ID_SOLOCAM = 4;
+const int ID_USBMODE  = 5;
 
 // I2C slave addresses
 const int I2CEEPROM = 0x50;
@@ -45,7 +45,6 @@ unsigned long previous_sync;  // last sync (used by timelapse mode)
 
 #if !defined(__AVR_ATtiny1634__)
 // --------------------------------------------------------------------------------
-#if !defined(USE_I2C_PROXY)
 #if defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__)
 // interrupts
 void receiveHandler(size_t numBytes)
@@ -86,49 +85,8 @@ void resetI2C()
   WIRE.onRequest(requestHandler);
 }
 
-#else // if defined(USE_I2C_PROXY)
-
-void receiveHandler()
-{
-  int datalen;
-  // since data length is variable and not yet known, read one byte first.
-  WIRE.requestFrom(I2CPROXY, 1, I2C_NOSTOP);
-  if (WIRE.available()) {
-    datalen = WIRE.read() & 0x7f;
-  } else {
-    // panic! error
-    datalen = -1;
-  }
-  // request again
-  WIRE.requestFrom(I2CPROXY, datalen + 1, I2C_STOP);
-  for (int i = 0; i <= datalen; i++) {
-    recv[i] = WIRE.read();
-    recvq = true;
-  }
-  if ((recv[1] << 8) + recv[2] == SET_BACPAC_3D_SYNC_READY) {
-    switch (recv[3]) {
-    case 1:
-      ledOn();
-      break;
-    case 0:
-      ledOff();
-      break;
-    default:
-      break;
-    }
-  }
-}
-
-void resetI2C()
-{
-  emptyQueue();
-  WIRE.begin();
-}
-
-#endif
-
 // Read I2C EEPROM
-boolean isMaster()
+boolean isSolocam()
 {
   if (eepromId == 0) {
     WIRE.begin();
@@ -142,15 +100,15 @@ boolean isMaster()
 
     resetI2C();
   }
-  return (eepromId == ID_MASTER);
+  return (eepromId == ID_SOLOCAM);
 }
 
-// If MewPro in Master Mode, show bacpac ready to take control.  If MewPro
-// in Slave Mode, trick camera into ignoring MewPro (so that USB mode
+// If MewPro in Solocam Mode, show bacpac ready to take control.  If MewPro
+// in USBmode, trick camera into ignoring MewPro (so that USB mode
 // works)
 void stayInvisibleOrShowBPRDY()
 {
-  if (isMaster()){ // show camera BPRDY to take control
+  if (isSolocam()){ // show camera BPRDY to take control
     pinMode(BPRDY, OUTPUT);
     digitalWrite(BPRDY, LOW);
   } else { // remain invisible (so camera acts independently)
@@ -158,46 +116,64 @@ void stayInvisibleOrShowBPRDY()
   }
 }
 
-// Show Master/Slave via LED: 1 blink for Slave, 2 for Master
-void showMasterStatus()
+// Show Solocam/USBmode via LED: 3 blink for USBmode, 4 for Solocam
+void showModeOnLED()
 {
   boolean orig_led_state = ledState;
-  isMaster() ? signalMaster() : signalSlave();
+  isSolocam() ? signalSolocam() : signalUSBmode();
   if (orig_led_state == 1) ledOn();
   else ledOff();
 }
 
-void signalMaster() // 2 blinks for Master
+void signalSolocam() // 4 blinks for Solocam Mode
 {
   ledOff(); // ready
   delay(100);
   ledOn(); // blink 1
-  delay(250);
+  delay(100);
   ledOff();
-  delay(250);
+	delay(100);
   ledOn(); // blink 2
-  delay(250);
+  delay(100);
+  ledOff();
+	delay(100);
+  ledOn(); // blink 3
+  delay(100);
+  ledOff();
+	delay(100);
+  ledOn(); // blink 4
+  delay(100);
+  ledOff();
+	delay(100);
 }
 
-void signalSlave() // 1 blink for Slave
+void signalUSBmode() // 3 blinks for USBmode
 {
   ledOff(); // ready
   delay(100);
   ledOn(); // blink 1
-  delay(500);
+  delay(150);
   ledOff();
-  delay(250);
+	delay(100);
+  ledOn(); // blink 2
+  delay(150);
+  ledOff();
+	delay(100);
+  ledOn(); // blink 3
+  delay(150);
+  ledOff();
+  delay(100);
 }
 
 // Write I2C EEPROM
-void roleChange()
+void modeChange()
 {
   byte id, d;
   // emulate detouching bacpac by releasing BPRDY line
   pinMode(BPRDY, INPUT);
   delay(1000);
 
-  id = isMaster() ? ID_SLAVE : ID_MASTER;
+  id = isSolocam() ? ID_USBMODE : ID_SOLOCAM;
 
   WIRE.begin();
   for (unsigned int a = 0; a < 16; a += PAGESIZE) {
@@ -205,7 +181,7 @@ void roleChange()
     WIRE.write((byte) a);
     for (int i = 0; i < PAGESIZE; i++) {
       switch ((a + i) % 4) {
-      case 0: d = id; break; // major (MOD1): 4 for master, 5 for slave
+      case 0: d = id; break; // major (MOD1): 4 for Solocam, 5 for USBmode
       case 1: d = 5; break;  // minor (MOD2) need to be greater than 4
       case 2: d = 1; break;
       case 3: d = (id == 4 ? 0x0a : 0x0b); break;
@@ -216,19 +192,15 @@ void roleChange()
     delayMicroseconds(WRITECYCLETIME);
   }
   eepromId = id;
-  isMaster() ? __debug(F(" to master")) : __debug(F(" to slave"));
-  showMasterStatus(); // show master/slave status via LED
-  stayInvisibleOrShowBPRDY(); // If Master mode, show ready to camera.  If
-                              // slave mode, MewPro stays invisible
+  isSolocam() ? __debug(F(" to solocam")) : __debug(F(" to usbmode"));
+  showModeOnLED(); // show solocam/usbmode status via LED
+  stayInvisibleOrShowBPRDY(); // If Solocam mode, show ready to camera.  If
+                              // USBmode, MewPro stays invisible
   resetI2C();
 }
 
 // --------------------------------------------------------------------------------
 #else // __AVR_ATtiny1634__
-
-#ifdef USE_I2C_PROXY
-#error do not define USE_I2C_PROXY for the CPU cannot work as I2C master
-#endif
 
 #define ROMSIZE 16
 #define EEPROMOFFSET 0
@@ -310,7 +282,7 @@ void __romWrite(uint8_t id)
   byte d;
   for (int a = 0; a < ROMSIZE; a++) {
     switch (a % 4) {
-    case 0: d = id; break; // major (MOD1): 4 for master, 5 for slave
+    case 0: d = id; break; // major (MOD1): 4 for Solocam, 5 for USBmode
     case 1: d = 5; break;  // minor (MOD2) need to be greater than 4
     case 2: d = 1; break;
     case 3: d = (id == 4 ? 0x0a : 0x0b); break;
@@ -319,34 +291,34 @@ void __romWrite(uint8_t id)
   }
 }
 
-boolean isMaster()
+boolean isSolocam()
 {
   if (eepromId == 0) {
     eepromId = EEPROM.read(EEPROMOFFSET);
-    if (eepromId != ID_MASTER && eepromId != ID_SLAVE) {
-      __romWrite(ID_MASTER);
-      eepromId = ID_MASTER;
+    if (eepromId != ID_SOLOCAM && eepromId != ID_USBMODE) {
+      __romWrite(ID_SOLOCAM);
+      eepromId = ID_SOLOCAM;
     }
     resetI2C();
   }
-  return (eepromId == ID_MASTER);
+  return (eepromId == ID_SOLOCAM);
 }
 
 // Write built-in EEPROM
-void roleChange()
+void modeChange()
 {
   byte id, d;
   // emulate detouching bacpac by releasing BPRDY line
   pinMode(BPRDY, INPUT);
   delay(1000);
 
-  id = isMaster() ? ID_SLAVE : ID_MASTER;
+  id = isSolocam() ? ID_USBMODE : ID_SOLOCAM;
   __romWrite(id);
   eepromId = id;
-  isMaster() ? __debug(F(" to master")) : __debug(F(" to slave"));
-  showMasterStatus(); // show master/slave status via LED
-  stayInvisibleOrShowBPRDY(); // If Master mode, show ready to camera.  If
-                              // slave mode, MewPro stays invisible
+  isSolocam() ? __debug(F(" to solocam")) : __debug(F(" to usbmode"));
+  showModeOnLED(); // show solocam/usbmode status via LED
+  stayInvisibleOrShowBPRDY(); // If Solocam mode, show ready to camera.  If
+                              // USBmode, MewPro stays invisible
 }
 // --------------------------------------------------------------------------------
 #endif // __AVR_ATtiny1634
@@ -361,9 +333,7 @@ void __debug(const __FlashStringHelper *p)
     //because with debug msg on, the whole system cannot work normally
     //if not in a Genlock sync system (single use), I think it's better to wait for flush
     //may cause delay for a long debug msg
-#ifndef USE_GENLOCK
     Serial.flush();
-#endif
   }
 }
 
@@ -416,14 +386,6 @@ void SendBufToCamera() {
   int command = (buf[1] << 8) + buf[2];
   switch (command) {
   case SET_CAMERA_3D_SYNCHRONIZE:
-#ifdef USE_GENLOCK
-    if (1) { // send to Dongle
-      Serial.print(F("SH"));
-      printHex(buf[3], true);
-      Serial.println("");
-      Serial.flush();
-    }
-#endif
     noInterrupts();
     waiting = true; // don't read the next command from the queue until a
                     // reply is received to the present one
@@ -431,14 +393,6 @@ void SendBufToCamera() {
     interrupts();
     break;
   case SET_CAMERA_USBMODE:
-#ifdef USE_GENLOCK
-    if (1) { // send to Dongle
-      Serial.print(F("UM"));  // Warn: UM is sent to Dongle but Dongle should not send it to Bacpac.
-      printHex(buf[3], true);
-      Serial.println("");
-      Serial.flush();
-    }
-#endif
     waiting = true;
     break;
   case GET_CAMERA_INFO:
@@ -467,40 +421,18 @@ void SendBufToCamera() {
   }
 
   // Send I2C message out (buf[])
-#if !defined(USE_I2C_PROXY)
   digitalWrite(I2CINT, LOW);
   // by pulling low the I2CINT (making a request), GoPro will handle the
   // request, receive buf[], then executes the command in buf[] immediately
-#else
-  WIRE.beginTransmission(I2CPROXY);
-  WIRE.write(buf, (int) buf[0] + 1);
-  WIRE.endTransmission(I2C_STOP);
-#endif
 }
 
 void startRecording()
 {
-  /* hgm: Not yet working, consider removing */
-  /* #if defined(USE_GENLOCK) */
-  /*   // Start SMARTY generating signals recording */
-  /*   Serial.println(""); // hgm: why send this? */
-  /*   Serial.println(F("SH01")); */
-  /*   Serial.flush(); */
-  /* #endif */
-  /*   // Start cam recording */
   queueIn(F("SY1"));
 }
 
 void stopRecording()
 {
-  /* hgm: Not yet working, consider deleting */
-  /* #if defined(USE_GENLOCK) */
-  /*   // Multi-camera stop recording */
-  /*   Serial.println(""); // hgm: why send this? */
-  /*   Serial.println(F("SH00")); */
-  /*   Serial.flush(); */
-  /* #endif */
-  /*   // Stop cam recording */
   queueIn(F("SY0"));
 }
 
@@ -509,12 +441,6 @@ void powerOn()
 {
   pinMode(PWRBTN, OUTPUT);
   digitalWrite(PWRBTN, LOW);
-#ifdef USE_GENLOCK
-  // send to Dongle
-  Serial.println(""); // hgm: why send this?
-  Serial.println(F("@"));
-  Serial.flush();
-#endif
   delay(1000);
   tdDone = false;
   pinMode(PWRBTN, INPUT);
@@ -525,12 +451,6 @@ void powerOff()
   //power off master first
   buf[0] = 3; buf[1] = 'P'; buf[2] = 'W'; buf[3] = 0x00;
   SendBufToCamera();
-#ifdef USE_GENLOCK
-  // send to Dongle
-  Serial.println(""); // hgm: why send this?
-  Serial.println(F("PW00"));
-  Serial.flush();
-#endif
 }
 
 void checkCameraCommands()
@@ -591,8 +511,8 @@ void checkCameraCommands()
       return;
     case '!':
       bufp = 1;
-      __debug(F("role change"));
-      roleChange();
+      __debug(F("mode change"));
+      modeChange();
       while (inputAvailable()) {
         if (myRead() == '\n') {
           return;

@@ -2,8 +2,8 @@
 
 boolean ledState;
 
-//  Arduino Due           || Teensy 3.1             || Teensy 3.0             || Teensy LC             || Arduino Pro Mini            || ATtiny1634                  || Intel Edison
-#if defined (__SAM3X8E__) || defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATtiny1634__) || defined(__ARDUINO_X86__)
+//  Arduino Due           || Arduino Pro Mini            || ATtiny1634
+#if defined (__SAM3X8E__) || defined(__AVR_ATmega328P__) || defined(__AVR_ATtiny1634__)
 const int LED_OUT          = 13; // Arduino onboard LED; HIGH (= ON) while recording
 
 void ledOff()
@@ -43,37 +43,6 @@ void setupLED()
 {
   ledOff();
 }
-//    GR-KURUMI
-#elif defined(REL_GR_KURUMI)
-const int LED_OUT_R        = 22; // GR-KURUMI RGB-LED; active LOW
-const int LED_OUT_G        = 23;
-const int LED_OUT_B        = 24;
-
-void ledOff()
-{
-  // white
-  pinMode(LED_OUT_R, INPUT);
-  pinMode(LED_OUT_G, INPUT);
-  pinMode(LED_OUT_B, INPUT);
-  ledState = false;
-}
-
-void ledOn()
-{
-  pinMode(LED_OUT_R, OUTPUT);
-  pinMode(LED_OUT_G, OUTPUT);
-  pinMode(LED_OUT_B, OUTPUT);
-  // green
-  digitalWrite(LED_OUT_R, HIGH);
-  digitalWrite(LED_OUT_G, LOW);
-  digitalWrite(LED_OUT_B, HIGH);
-  ledState = true;
-}
-
-void setupLED()
-{
-  ledOff();
-}
 #else
-#error CPU not supported
+#error CPU not supported (hgm removed some CPUs on 2015-07-10, see orangkucing's code for support)
 #endif

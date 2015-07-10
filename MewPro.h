@@ -1,8 +1,8 @@
 // Arduino pins
 // Assignment of these pins (except 10-13/A0-A1 or I2C's SCL/SDA) can be re-configured here.
 //
-//  Arduino Due           || Teensy 3.1             || Teensy 3.0             || Teensy LC             || Arduino Pro Mini            || GR-KURUMI              || Intel Edison
-#if defined (__SAM3X8E__) || defined(__MK20DX256__) || defined(__MK20DX128__) || defined(__MKL26Z64__) || defined(__AVR_ATmega328P__) || defined(REL_GR_KURUMI) || defined(__ARDUINO_X86__)
+//  Arduino Due           || Arduino Pro Mini
+#if defined (__SAM3X8E__) || defined(__AVR_ATmega328P__)
 //                           0;  // (Used by Serial port RXI)
 //                           1;  // (Used by Serial port TXO)
 const int SHUTTER_PIN      = 2;  // Interrupt pin w/o software debounce
@@ -185,13 +185,6 @@ const int TD_PROTUNE_SHARPNESS              = 0x27;
 const short int SET_BACPAC_PROTUNE_EXPOSURE_VALUE = ('E' << 8) + 'V';
 const int TD_PROTUNE_EXPOSURE_VALUE         = 0x28;
 
-// hgm: Not documented commands (from GoPro-I2Ccommands.md)
-// SH SET_BACPAC_SHUTTER_SETTING (defunct)
-// um GET_CAMERA_USBMODE
-// ai GET_CAMERA_AUDIOINPUTMODE
-// wi GET_CAMERA_WIFI_STATUS (hgm: should be GET_BACPAC_WIFI ?)
-
-
 #define MODE_VIDEO 0x00
 #define MODE_PHOTO 0x01
 #define MODE_BURST 0x02
@@ -242,21 +235,9 @@ extern void setupLED();
 // function prototypes
 //   Arduino IDE doesn't need these prototypes but does Renesas Web Compiler
 void resetI2C(void);
-void setupShutter(void);
-void setupSwitch(void);
-void setupIRremote(void);
-void setupLightSensor(void);
-void setupPIRSensor(void);
 void setupGenlock(void);
-void resetVMD(void);
-void checkTimeAlarms(void);
 void checkBacpacCommands(void);
 void checkCameraCommands(void);
-void checkSwitch(void);
-void checkIRremote(void);
-void checkLightSensor(void);
-void checkPIRSensor(void);
-void checkVMD(void);
 void checkGenlock(void);
 void startGenlock(void);
 void stopGenlock(void);
